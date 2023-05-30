@@ -375,7 +375,7 @@ class MirrorLeechListener:
         elif RC_INDEX_URL := config_dict['RC_INDEX_URL']:
             RC_INDEX_PORT= config_dict['RC_INDEX_PORT']
             encoded_path = rutils.quote(f'{base}{name}')
-            share_url = f'{RC_INDEX_URL}:{RC_INDEX_PORT}/[{remote}:]/{encoded_path}'
+            share_url = f'{RC_INDEX_URL}/{remote}/{encoded_path}'
             if mime_type == "Folder":
                 share_url += '/'
             button.url_buildbutton("🔗 Rclone Link", share_url)
