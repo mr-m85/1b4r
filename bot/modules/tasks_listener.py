@@ -285,9 +285,9 @@ class MirrorLeechListener:
             files = data["count"]
             size = human_readable_bytes(data["bytes"])
             
-        f_out = f"**Total Files** {files}" 
-        f_out += f"\n**Total Size**: {size}"
-        f_out += f"\n<b>cc: </b>{self.tag}"
+        msg = f"<b>Total Files</b>: {files}" 
+        msg += f"\n<b>Total Size</b>: {size}"
+        msg += f"\n\n<b>cc: </b>{self.tag}"
         
         cmd = ["rclone", "link", f'--config={conf}', f"{dest_remote}:{dest_dir}{origin_dir}"]
         process = await create_subprocess_exec(*cmd, stdout=PIPE, stderr=PIPE)
@@ -297,10 +297,10 @@ class MirrorLeechListener:
         if rc == 0:
             button= ButtonMaker()
             button.url_buildbutton("Cloud Link 🔗", url)
-            await sendMarkup(f_out, self.message, reply_markup= button.build_menu(1))
+            await sendMarkup(msg, self.message, reply_markup= button.build_menu(1))
         else:
             LOGGER.info(err.decode().strip())
-            await sendMessage(f_out, self.message)
+            await sendMessage(msg, self.message)
        
         await clean_download(self.dir)
         if count == 0:
@@ -333,6 +333,8 @@ class MirrorLeechListener:
             link= await get_drive_link(remote, base, name, config_path, mime_type)
             if link:
                 button.url_buildbutton("Cloud Link 🔗", link)
+            else:
+                button.url_buildbutton("Cloud Link 🚫", "https://drive.google.com/error?")
         else:
             cmd = ["rclone", "link", f'--config={config_path}', f"{remote}:{base}/{name}"]
             res, err, code = await cmd_exec(cmd)
@@ -340,6 +342,7 @@ class MirrorLeechListener:
                 button.url_buildbutton("Cloud Link 🔗", res)
             else:
                 LOGGER.error( f'Error while getting link. Error: {err}')
+                button.url_buildbutton("Cloud Link 🚫", "https://drive.google.com/error?")
         if is_gdrive and (GD_INDEX_URL:= config_dict['GD_INDEX_URL']):
             encoded_path = rutils.quote(f'{base}{name}')
             share_url = f'{GD_INDEX_URL}/{encoded_path}'

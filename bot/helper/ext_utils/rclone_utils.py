@@ -162,6 +162,7 @@ async def list_folder(message, rclone_remote, base_dir, menu_type, is_second_men
     dir_callback = "remote_dir"
     file_callback= ""
     back_callback= "back"
+    is_crypt= False
     
     cmd = ["rclone", "lsjson", f'--config={path}', f"{rclone_remote}:{base_dir}"]
     
@@ -175,10 +176,25 @@ async def list_folder(message, rclone_remote, base_dir, menu_type, is_second_men
         except KeyError:
              raise ValueError("Invalid key") 
     elif menu_type == Menus.MIRROR_SELECT:
+        rc_path= f'{rclone_remote}:{base_dir}'
+        conf = ConfigParser()
+        conf.read(path)
+        for section in conf.sections():
+            if conf.get(section, 'type') == "crypt":
+                rc_path= conf.get(section, 'remote')
+                msg= f"Crypt Remote\n\n<b>Path:</b><code>{rc_path}</code>"
+                buttons.cb_buildbutton("✅ Select", f"{menu_type}^close^{user_id}")
+                buttons.cb_buildbutton("⬅️ Back", f"{menu_type}^{back_callback}^{user_id}", 'footer_second')
+                buttons.cb_buildbutton("✘ Close Menu", f"{menu_type}^close^{user_id}", 'footer_third')
+                if edit:
+                    await editMessage(msg, message, reply_markup= buttons.build_menu(1))
+                else:
+                    await sendMarkup(msg, message, reply_markup= buttons.build_menu(1))
+                return
         next_type= "next_ms"
         cmd.extend(['--dirs-only', '--fast-list', '--no-modtime'])
         buttons.cb_buildbutton("✅ Select this folder", f"{menu_type}^close^{user_id}")
-        msg= f"Select folder where you want to store files\n\n<b>Path:</b><code>{rclone_remote}:{base_dir}</code>"
+        msg= f"Select folder where you want to store files\n\n<b>Path:</b><code>{rc_path}</code>"
     elif menu_type == Menus.MYFILES:
         next_type= 'next_myfiles'
         file_callback= "file_action"
